@@ -4,11 +4,11 @@ import snake_game
 
 
 LEFT = 0
-RIGHT = 1
-UP = 2
-DOWN = 3
+DOWN = 1
+RIGHT = 2
+UP = 3
 
-DIRECTIONS = [LEFT, RIGHT, UP, DOWN]
+DIRECTIONS = [UP, RIGHT, DOWN, LEFT]
 
 class State:
     def __init__(self):
@@ -17,8 +17,10 @@ class State:
         self.food_angle = 0.0  # type: float
 
     def get_blocked_dirs(self):
-        point = np.array(snake[0]) + np.array(direction)
-        return point.tolist() in snake[:-1] or point[0] == 0 or point[1] == 0 or point[0] == 21 or point[1] == 21
+        for dir in DIRECTIONS:
+            # CHECK UP
+            point = np.array(snake[0]) + np.array([0,1])
+            return point.tolist() in snake[:-1] or point[0] == 0 or point[1] == 0 or point[0] == 21 or point[1] == 21
 
     def get_motion_dirs(self):
         return

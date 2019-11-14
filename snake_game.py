@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*- 
 import curses
 from random import randint
+from typing import List
+import time
 
 class SnakeGame:
     def __init__(self, board_width = 20, board_height = 20, gui = False):
@@ -21,7 +23,7 @@ class SnakeGame:
         self.snake = []
         vertical = randint(0,1) == 0
         for i in range(3):
-            point = [x + i, y] if vertical else [x, y + i]
+            point = [x, y - i] if vertical else [x - i, y]
             self.snake.insert(0, point)
 
     def generate_food(self):
@@ -30,6 +32,7 @@ class SnakeGame:
             food = [randint(1, self.board["width"]), randint(1, self.board["height"])]
             if food in self.snake: food = []
         self.food = food
+        print("Food: " + str(food))
 
     def render_init(self):
         curses.initscr()
@@ -44,19 +47,19 @@ class SnakeGame:
         self.win.clear()
         self.win.border(0)
         self.win.addstr(0, 2, 'Score : ' + str(self.score) + ' ')
-        self.win.addch(self.food[0], self.food[1], 'F')
+        self.win.addch(self.food[1], self.food[0], 'F')
         for i, point in enumerate(self.snake):
             if i == 0:
-                self.win.addch(point[0], point[1], 'H')
+                self.win.addch(point[1], point[0], 'H')
             else:
-                self.win.addch(point[0], point[1], 'b')
+                self.win.addch(point[1], point[0], 'b')
         self.win.getch()
 
     def step(self, key):
-        # 0 - UP
-        # 1 - RIGHT
-        # 2 - DOWN
-        # 3 - LEFT
+        # 0 - LEFT
+        # 1 - DOWN
+        # 2 - RIGHT
+        # 3 - UP
         if self.done == True: self.end_game()
         self.create_new_point(key)
         if self.food_eaten():
@@ -69,6 +72,12 @@ class SnakeGame:
         return self.generate_observations()
 
     def create_new_point(self, key):
+        """
+
+        :param key:
+        :return:
+        """
+        # Get current head
         new_point = [self.snake[0][0], self.snake[0][1]]
         if key == 0:
             new_point[0] -= 1
@@ -91,7 +100,7 @@ class SnakeGame:
             self.snake[0][0] == self.board["width"] + 1 or
             self.snake[0][1] == 0 or
             self.snake[0][1] == self.board["height"] + 1 or
-            self.snake[0] in self.snake[1:-1]):
+            self.snake[0] in self.snake[1:]):
             self.done = True
 
     def generate_observations(self):
@@ -109,3 +118,4 @@ if __name__ == "__main__":
     game.start()
     for _ in range(20):
         game.step(randint(0,3))
+
