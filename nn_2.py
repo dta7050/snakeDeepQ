@@ -170,7 +170,8 @@ class SnakeNN:
         training_data = self.initial_population()
         nn_model = self.model()
         nn_model = self.train_model(training_data, nn_model)
-        self.test_model(nn_model)
+        #self.test_model(nn_model)
+        self.visualise_game(nn_model)
 
     def visualise(self):
         nn_model = self.model()

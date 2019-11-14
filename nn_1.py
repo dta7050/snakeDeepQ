@@ -83,7 +83,7 @@ class SnakeNN:
         network = input_data(shape=[None, 4, 1], name='input')
         network = fully_connected(network, 1, activation='linear')
         network = regression(network, optimizer='adam', learning_rate=self.lr, loss='mean_square', name='target')
-        model = tflearn.DNN(network, tensorboard_dir='log')
+        model = tflearn.DNN(network)
         return model
 
     def train_model(self, training_data, model):
@@ -138,7 +138,8 @@ class SnakeNN:
         training_data = self.initial_population()
         nn_model = self.model()
         nn_model = self.train_model(training_data, nn_model)
-        self.test_model(nn_model)
+        #self.test_model(nn_model)
+        self.visualise_game(nn_model)
 
     def visualise(self):
         nn_model = self.model()
@@ -152,3 +153,5 @@ class SnakeNN:
 
 if __name__ == "__main__":
     SnakeNN().train()
+
+

@@ -3,11 +3,12 @@ import enum
 import snake_game
 
 
-class Direction(enum.Enum):
-    LEFT = 0
-    RIGHT = 1
-    UP = 2
-    DOWN = 3
+LEFT = 0
+RIGHT = 1
+UP = 2
+DOWN = 3
+
+Directions = [LEFT, RIGHT, UP, DOWN]
 
 class State:
     def __init__(self):
@@ -16,7 +17,7 @@ class State:
         self.food_angle = 0.0  # type: float
 
     def get_blocked_dirs(self):
-
+        for
         point = np.array(snake[0]) + np.array(direction)
         return point.tolist() in snake[:-1] or point[0] == 0 or point[1] == 0 or point[0] == 21 or point[1] == 21
 
