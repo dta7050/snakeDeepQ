@@ -98,33 +98,44 @@ def run_deep_q():
     :return:
     """
     # Initializations
-    game_counter = 0
-    nn = NeuralNetwork(1, [20], "adam")
+    num_games = 1000
+    nn = NeuralNetwork(1, [12], "adam")
+    scores = []
 
-    while game_counter < 150:
+    for game_counter in range(num_games):
         # Create game object
-        game = SnakeGame(gui=True)
+        game = SnakeGame(gui=False)
         # start game
         game.start()
 
         while not game.done:
             # update game state
-            _, _, snake, food = game.generate_observations()
+            _, _, snake, food, _ = game.generate_observations()
 
-            # get pre state
+            # get pre action snake state
             pre_state = State(snake, food).state
 
             # predict action to take using model
             prediction = nn.model.predict(np.reshape(pre_state, (1, 12)))
-            action = to_categorical(np.argmax(prediction[0]), num_classes=4)
+            action = np.argmax(prediction[0])
 
             # Use epsilon greedy action to either take predicted action or random action
             # Takes random actions less often as more games are played
             epsilon = np.random.rand() - (MODEL_BIAS_FACTOR * game_counter)
             action = epsilon_greedy_policy(epsilon, action)
 
-            # take action
-            return
+            # take action and get updated game state
+            _, _, snake, food, reward = game.step(action)
+
+            # Get post action snake state
+            post_state = State(snake, food).state
+
+            # Train neural network
+            nn.train_on_timestep(pre_state, post_state, action, reward)
+
+        # end while game.done()
+        scores.append(game.score)
+        print('Game:' + str(game_counter + 1) + '       ' + 'Score: ' + str(game.score))
 
 
 run_deep_q()

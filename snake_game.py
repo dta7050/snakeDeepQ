@@ -15,6 +15,7 @@ class SnakeGame:
         :param gui: Whether or not to show the game
         """
         self.score = 0  # initialize the score (increments after eating food)
+        self.reward = 0
         self.done = False  # bool indicating if the game is over
         self.board = {'width': board_width, 'height': board_height}  # dict containing game window dimensions
         self.gui = gui  # bool indicating whether or not to display the game
@@ -102,13 +103,18 @@ class SnakeGame:
         # 1 - DOWN
         # 2 - RIGHT
         # 3 - UP
-        if self.done == True:  # if the snake dies, end the game
+        if self.done:  # if the snake dies, end the game
+            self.reward = -10
+            self.score -= 10
             self.end_game()
         self.create_new_point(key)
         if self.food_eaten():
-            self.score += 1
+            self.score += 10
+            self.reward = 10
             self.generate_food()
         else:
+            self.reward = 1
+            self.score += 1
             self.remove_last_point()
         self.check_collisions()
         if self.gui:
@@ -169,7 +175,7 @@ class SnakeGame:
         points, and the food point
         :return:
         """
-        return self.done, self.score, self.snake, self.food
+        return self.done, self.score, self.snake, self.food, self.reward
 
     def render_destroy(self):
         """
@@ -186,6 +192,7 @@ class SnakeGame:
         if self.gui:
             self.render_destroy()
         raise Exception("Game over")
+
 
 if __name__ == "__main__":
     game = SnakeGame(gui=True)
