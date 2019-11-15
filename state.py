@@ -27,7 +27,6 @@ from typing import List
 import numpy as np
 
 
-
 class State:
     def __init__(self, snake: List[List[int]], food: List[int]):
         """
@@ -174,7 +173,12 @@ class State:
         if norm_displacement[1] == UP_DIR[1]:
             self.food_dirs[UP] = 1
 
-    def get_permissable_actions(self):
+    def get_permissible_actions(self) -> List[int]:
+        """
+        Uses the direction of the snake to return a list of actions that the snake can take that will
+        result in the snake not colliding with itself
+        :return: list of the actions that snake can take
+        """
         if self.motion_dirs[0]:
             return [LEFT, DOWN, UP]
         elif self.motion_dirs[1]:
@@ -182,7 +186,6 @@ class State:
         elif self.motion_dirs[2]:
             return [DOWN, RIGHT, UP]
         return [LEFT, RIGHT, UP]
-
 
 
 def get_snake_direction(snake: List[List[int]]) -> np.ndarray:

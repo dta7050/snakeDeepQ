@@ -1,8 +1,13 @@
+"""
+test_state.py
+
+File with various test cases for functions of state.py
+"""
 
 from state import State
 from constants import *
 
-fake_food = [5,5]
+fake_food = [5, 5]  # Used where the food is not relevant to determining the proper functionality of the function
 
 
 # TESTS FOR GET_BLOCKED_DIRS() --------------------------------------------------------------------------------------
@@ -221,34 +226,34 @@ print("TESTING GET_PERMISSIBLE_ACTIONS()")
 # LEFT MOVING SNAKE
 snake = [[10,9], [11,9], [12,9]]
 s = State(snake, fake_food)
-if s.get_permissable_actions() == [LEFT, DOWN, UP]:
+if s.get_permissible_actions() == [LEFT, DOWN, UP]:
     print("PASS")
 else:
     print("FAIL")
-    print(s.get_permissable_actions())
+    print(s.get_permissible_actions())
 
 # DOWN MOVING SNAKE
 snake = [[10,9], [10,8], [10,7]]
 s = State(snake, fake_food)
-if s.get_permissable_actions() == [LEFT, DOWN, RIGHT]:
+if s.get_permissible_actions() == [LEFT, DOWN, RIGHT]:
     print("PASS")
 else:
     print("FAIL")
-    print(s.get_permissable_actions())
+    print(s.get_permissible_actions())
 
 # RIGHT MOVING SNAKE
 snake = [[10,9], [9,9], [8,9]]
 s = State(snake, fake_food)
-if s.get_permissable_actions() == [DOWN, RIGHT, UP]:
+if s.get_permissible_actions() == [DOWN, RIGHT, UP]:
     print("PASS")
 else:
     print("FAIL")
-    print(s.get_permissable_actions())
+    print(s.get_permissible_actions())
 
 # UP MOVING SNAKE
 snake = [[10,9], [10,10], [10,11]]
 s = State(snake, fake_food)
-if s.get_permissable_actions() == [LEFT, RIGHT, UP]:
+if s.get_permissible_actions() == [LEFT, RIGHT, UP]:
     print("PASS")
 else:
     print("FAIL")

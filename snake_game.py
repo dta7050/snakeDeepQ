@@ -2,7 +2,7 @@
 import curses
 from random import randint
 from typing import List
-import time
+
 
 class SnakeGame:
     def __init__(self, board_width: int = 20, board_height: int = 20, gui: bool = False):
@@ -33,14 +33,14 @@ class SnakeGame:
             self.render_init()  # if gui == true, create game window
         return self.generate_observations()
 
-    def snake_init(self):
+    def snake_init(self) -> None:
         """
         Creates the snake at a random point on
         the screen, at least five points away
         from each wall. The snake can start
         being vertical or horizontal and initially
         consists of three points
-        :return:
+        :return: None
         """
         x = randint(5, self.board["width"] - 5)  # generate random x coordinate
         y = randint(5, self.board["height"] - 5)  # generate random y coordinate
@@ -50,10 +50,10 @@ class SnakeGame:
             point = [x + i, y] if vertical else [x, y + i]  # creates the points of the snake
             self.snake.insert(0, point)  # adds it to the snake list
 
-    def generate_food(self):
+    def generate_food(self) -> None:
         """
         Creates food point in a random spot on the board
-        :return:
+        :return: None
         """
         food = []  # empty list to store food point coordinates
         while food == []:
@@ -62,10 +62,10 @@ class SnakeGame:
                 food = []  # empty the food list
         self.food = food  # snake game food coordinate equals generated food coordinate
 
-    def render_init(self):
+    def render_init(self) -> None:
         """
         Initializes the game window.
-        :return:
+        :return: None
         """
         curses.initscr()  # initializes curses library
         win = curses.newwin(self.board["width"] + 2, self.board["height"] + 2, 0, 0)  # sets window corner points
@@ -75,10 +75,10 @@ class SnakeGame:
         self.win = win  # set the snake game variable, win, to the initialized window
         self.render()  # calls render function
 
-    def render(self):
+    def render(self) -> None:
         """
         Updates the game window, waits for button press
-        :return:
+        :return: None
         """
         self.win.clear()  # clears the game window
         self.win.border(0)  # draws the walls
@@ -103,8 +103,11 @@ class SnakeGame:
         # 1 - DOWN
         # 2 - RIGHT
         # 3 - UP
+        # 'Moves' the snake
         self.create_new_point(key)
+        # Sees if snake hit wall or itself
         self.check_collisions()
+        # Game over check and reward assignment
         if self.done:  # if the snake dies, end the game
             self.reward = -10
             self.score -= 10
@@ -122,12 +125,12 @@ class SnakeGame:
             self.render()
         return self.generate_observations()
 
-    def create_new_point(self, key: int):
+    def create_new_point(self, key: int) -> None:
         """
         Creates a new head point in the direction
         of the snakes motion (i.e. moves the snake).
         :param key: The snake's direction of motion
-        :return:
+        :return: None
         """
         # Get current head
         new_point = [self.snake[0][0], self.snake[0][1]]
@@ -141,10 +144,10 @@ class SnakeGame:
             new_point[1] -= 1
         self.snake.insert(0, new_point)  # add the new point to the snake
 
-    def remove_last_point(self):
+    def remove_last_point(self) -> None:
         """
         Removes the endpoint of the snake
-        :return:
+        :return: None
         """
         self.snake.pop()  # remove the last point in the snake list
 
@@ -156,11 +159,11 @@ class SnakeGame:
         """
         return self.snake[0] == self.food
 
-    def check_collisions(self):
+    def check_collisions(self) -> None:
         """
         Check if the snake is in the wall or
         collides with itself
-        :return:
+        :return: None
         """
         if (self.snake[0][0] == 0 or  # if the snake is in the right wall
             self.snake[0][0] == self.board["width"] + 1 or  # if the snake is in the left wall
@@ -178,17 +181,17 @@ class SnakeGame:
         """
         return self.done, self.score, self.snake, self.food, self.reward
 
-    def render_destroy(self):
+    def render_destroy(self) -> None:
         """
         Disables the display window
-        :return:
+        :return: None
         """
         curses.endwin()
 
-    def end_game(self):
+    def end_game(self) -> None:
         """
         Calls render_destroy to disable the game window
-        :return:
+        :return: None
         """
         if self.gui:
             self.render_destroy()
