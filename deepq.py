@@ -19,6 +19,7 @@ Contents:
 """
 from snake_game import *
 from state import *
+from constants import *
 
 import random
 import tensorflow
@@ -29,19 +30,6 @@ from typing import List
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.utils import to_categorical
-
-STATE_SIZE = 12
-ACTION_SET_SIZE = 4
-
-LEFT = 0
-DOWN = 1
-RIGHT = 2
-UP = 3
-
-DIRECTIONS = [LEFT, DOWN, RIGHT, UP]
-
-# The greater this number, the less likely to choose a random action as opposed to the models predicted action
-MODEL_BIAS_FACTOR = 0.01
 
 
 class NeuralNetwork:
@@ -55,12 +43,12 @@ class NeuralNetwork:
         """
         self.model = Sequential()  # initialize the model
 
-        self.model.add(Dense(STATE_SIZE, input_shape=(12,)))  # input layer
+        self.model.add(Dense(STATE_SIZE*2, input_dim=12))  # input layer
 
-        for i in range(num_layers):
-            self.model.add(Dense(num_neurons[i], activation='relu'))  # initialize hidden layers
+        # for i in range(num_layers):
+        #     self.model.add(Dense(num_neurons[i], activation='relu'))  # initialize hidden layers
 
-        self.model.add(Dense(ACTION_SET_SIZE, activation='linear'))  # output layer
+        self.model.add(Dense(ACTION_SET_SIZE, activation='softmax'))  # output layer
         self.model.compile(loss='mse', optimizer=opt)
         # print(self.model.summary())
 
@@ -78,8 +66,26 @@ class NeuralNetwork:
         """
         self.model.load(name)
 
+    def train_on_timestep(self, pre_state, post_state, action, reward):
+        # Use Bellman Equation to calculate the target q value for the post action state
+        target_post_state_q = reward + GAMMA * np.amax(self.model.predict(np.reshape(post_state, (1, 12)))[0])
+        # Use the model to predict the q vector of the pre action state
+        predicted_pre_state_q_vector = self.model.predict(np.reshape(pre_state, (1, 12)))
+        # Place the target post state q into its corresponding spot in the predicted pre state q vector
+        predicted_pre_state_q_vector[0][np.argmax(action)] = target_post_state_q
+        # This is now the target q vector to fit the model against
+        target_q_vector = predicted_pre_state_q_vector
+        # Use the target q vector to fit the model
+        self.model.fit(np.reshape(pre_state, (1, 12)), target_q_vector, epochs=1, verbose=0)
+
 
 def epsilon_greedy_policy(epsilon, action):
+    """
+
+    :param epsilon:
+    :param action:
+    :return:
+    """
     rand_num = np.random.rand()  # produces random number between 0 and 1
     if rand_num <= epsilon:
         action = random.randrange(ACTION_SET_SIZE)
@@ -109,7 +115,7 @@ def run_deep_q():
             pre_state = State(snake, food).state
 
             # predict action to take using model
-            prediction = nn.model.predict(pre_state.reshape(pre_state, (1, 12)))
+            prediction = nn.model.predict(np.reshape(pre_state, (1, 12)))
             action = to_categorical(np.argmax(prediction[0]), num_classes=4)
 
             # Use epsilon greedy action to either take predicted action or random action

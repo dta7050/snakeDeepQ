@@ -22,21 +22,10 @@
 #
 # ---------------------------------------------------------------------------------------------------------------------
 
+from constants import *
 from typing import List
-import snake_game
 import numpy as np
 
-LEFT = 0
-DOWN = 1
-RIGHT = 2
-UP = 3
-
-LEFT_DIR = [-1, 0]
-DOWN_DIR = [0, 1]
-RIGHT_DIR = [1,0]
-UP_DIR = [0, -1]
-
-DIRECTIONS = [UP, RIGHT, DOWN, LEFT]
 
 
 class State:
