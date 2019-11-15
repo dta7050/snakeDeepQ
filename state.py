@@ -44,6 +44,11 @@ class State:
         """
         Initializes the State object, given a snake
 
+        The State is a numpy array containing 12 boolean integers ( 0 or 1 ):
+            state = np.array(blocked_dirs[0 through 3], motion_dirs[0 through 3], food_dirs[0 through 3])
+
+            an example state looks like np.ndarray(0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1)
+
         The State is comprised of:
 
             blocked_dirs; List[int]:
@@ -78,7 +83,7 @@ class State:
         self.get_food_dirs(snake, food)
 
         # Create full state list
-        self.state = self.blocked_dirs + self.motion_dirs + self.food_dirs  # type: List[int]
+        self.state = np.array(self.blocked_dirs + self.motion_dirs + self.food_dirs)  # type: np.ndarray
 
     def get_blocked_dirs(self, snake: List[List[int]]) -> None:
         """
@@ -158,7 +163,7 @@ class State:
 
         # normalize the displacement to [+- 1, +- 1] to extract direction vectors
         if displacement[0] == 0 and displacement[1] == 0:
-            norm_displacement = [0, 0]
+            return  # Snake is on top of food point, keeps food_dirs as initialized ([0, 0, 0, 0])
         elif displacement[0] == 0:
             norm_displacement = [0, displacement[1]/abs(displacement[1])]
         elif displacement[1] == 0:
