@@ -174,6 +174,16 @@ class State:
         if norm_displacement[1] == UP_DIR[1]:
             self.food_dirs[UP] = 1
 
+    def get_permissable_actions(self):
+        if self.motion_dirs[0]:
+            return [LEFT, DOWN, UP]
+        elif self.motion_dirs[1]:
+            return [LEFT, DOWN, RIGHT]
+        elif self.motion_dirs[2]:
+            return [DOWN, RIGHT, UP]
+        return [LEFT, RIGHT, UP]
+
+
 
 def get_snake_direction(snake: List[List[int]]) -> np.ndarray:
     """

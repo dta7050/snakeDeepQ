@@ -15,5 +15,5 @@ ACTION_SET_SIZE = 4
 
 # MODEL PARAMETERS
 # The greater this number, the less likely to choose a random action as opposed to the models predicted action
-MODEL_BIAS_FACTOR = 0.1
+MODEL_BIAS_FACTOR = 0.01
 GAMMA = 0.9  # Discount factor

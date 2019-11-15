@@ -1,5 +1,6 @@
 
 from state import State
+from constants import *
 
 fake_food = [5,5]
 
@@ -214,4 +215,42 @@ if s.food_dirs == [0, 0, 1, 1]:
 else:
     print("FAIL")
     print(s.food_dirs)
+
+# TESTS FOR GET_PERMISSIBLE_ACTIONS() ---------------------------------------------------------------------------------
+print("TESTING GET_PERMISSIBLE_ACTIONS()")
+# LEFT MOVING SNAKE
+snake = [[10,9], [11,9], [12,9]]
+s = State(snake, fake_food)
+if s.get_permissable_actions() == [LEFT, DOWN, UP]:
+    print("PASS")
+else:
+    print("FAIL")
+    print(s.get_permissable_actions())
+
+# DOWN MOVING SNAKE
+snake = [[10,9], [10,8], [10,7]]
+s = State(snake, fake_food)
+if s.get_permissable_actions() == [LEFT, DOWN, RIGHT]:
+    print("PASS")
+else:
+    print("FAIL")
+    print(s.get_permissable_actions())
+
+# RIGHT MOVING SNAKE
+snake = [[10,9], [9,9], [8,9]]
+s = State(snake, fake_food)
+if s.get_permissable_actions() == [DOWN, RIGHT, UP]:
+    print("PASS")
+else:
+    print("FAIL")
+    print(s.get_permissable_actions())
+
+# UP MOVING SNAKE
+snake = [[10,9], [10,10], [10,11]]
+s = State(snake, fake_food)
+if s.get_permissable_actions() == [LEFT, RIGHT, UP]:
+    print("PASS")
+else:
+    print("FAIL")
+    print(s.motion_dirs)
 

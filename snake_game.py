@@ -103,11 +103,13 @@ class SnakeGame:
         # 1 - DOWN
         # 2 - RIGHT
         # 3 - UP
+        self.create_new_point(key)
+        self.check_collisions()
         if self.done:  # if the snake dies, end the game
             self.reward = -10
             self.score -= 10
             self.end_game()
-        self.create_new_point(key)
+            return self.generate_observations()
         if self.food_eaten():
             self.score += 10
             self.reward = 10
@@ -116,7 +118,6 @@ class SnakeGame:
             self.reward = 1
             self.score += 1
             self.remove_last_point()
-        self.check_collisions()
         if self.gui:
             self.render()
         return self.generate_observations()
@@ -191,7 +192,7 @@ class SnakeGame:
         """
         if self.gui:
             self.render_destroy()
-        raise Exception("Game over")
+        # raise Exception("Game over")
 
 
 if __name__ == "__main__":

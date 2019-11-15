@@ -25,10 +25,12 @@ import random
 import tensorflow
 import keras
 import numpy as np
+import matplotlib.pyplot as plt
 
 from typing import List
 from keras.models import Sequential
 from keras.layers import Dense
+from keras.optimizers import Adam
 from keras.utils import to_categorical
 
 
@@ -43,13 +45,13 @@ class NeuralNetwork:
         """
         self.model = Sequential()  # initialize the model
 
-        self.model.add(Dense(STATE_SIZE*2, input_dim=12))  # input layer
+        self.model.add(Dense(120, input_dim=12))  # input layer
 
-        # for i in range(num_layers):
-        #     self.model.add(Dense(num_neurons[i], activation='relu'))  # initialize hidden layers
+        for i in range(num_layers):
+            self.model.add(Dense(num_neurons[i], activation='relu'))  # initialize hidden layers
 
         self.model.add(Dense(ACTION_SET_SIZE, activation='softmax'))  # output layer
-        self.model.compile(loss='mse', optimizer=opt)
+        self.model.compile(loss='mse', optimizer=Adam(0.0005))
         # print(self.model.summary())
 
     def save_model(self, name: str):
@@ -66,9 +68,11 @@ class NeuralNetwork:
         """
         self.model.load(name)
 
-    def train_on_timestep(self, pre_state, post_state, action, reward):
-        # Use Bellman Equation to calculate the target q value for the post action state
-        target_post_state_q = reward + GAMMA * np.amax(self.model.predict(np.reshape(post_state, (1, 12)))[0])
+    def train_on_timestep(self, pre_state, post_state, action, reward, done):
+        target_post_state_q = reward
+        if not done:
+            # Use Bellman Equation to calculate the target q value for the post action state
+            target_post_state_q = reward + GAMMA * np.amax(self.model.predict(np.reshape(post_state, (1, 12)))[0])
         # Use the model to predict the q vector of the pre action state
         predicted_pre_state_q_vector = self.model.predict(np.reshape(pre_state, (1, 12)))
         # Place the target post state q into its corresponding spot in the predicted pre state q vector
@@ -79,7 +83,7 @@ class NeuralNetwork:
         self.model.fit(np.reshape(pre_state, (1, 12)), target_q_vector, epochs=1, verbose=0)
 
 
-def epsilon_greedy_policy(epsilon, action):
+def epsilon_greedy_policy(epsilon, action, permissible_actions):
     """
 
     :param epsilon:
@@ -88,9 +92,9 @@ def epsilon_greedy_policy(epsilon, action):
     """
     rand_num = np.random.rand()  # produces random number between 0 and 1
     if rand_num <= epsilon:
-        action = random.randrange(ACTION_SET_SIZE)
+        action = random.choice(permissible_actions)
     return action
-        
+
 
 def run_deep_q():
     """
@@ -98,8 +102,8 @@ def run_deep_q():
     :return:
     """
     # Initializations
-    num_games = 1000
-    nn = NeuralNetwork(1, [12], "adam")
+    num_games = 500
+    nn = NeuralNetwork(2, [120, 120], "adam")
     scores = []
 
     for game_counter in range(num_games):
@@ -109,8 +113,11 @@ def run_deep_q():
         game.start()
 
         while not game.done:
+            # print("Score: " + str(game.score))
             # update game state
             _, _, snake, food, _ = game.generate_observations()
+
+            # print("Snake: " + str(snake))
 
             # get pre action snake state
             pre_state = State(snake, food).state
@@ -122,20 +129,26 @@ def run_deep_q():
             # Use epsilon greedy action to either take predicted action or random action
             # Takes random actions less often as more games are played
             epsilon = np.random.rand() - (MODEL_BIAS_FACTOR * game_counter)
-            action = epsilon_greedy_policy(epsilon, action)
+            permissible_actions = State(snake, food).get_permissable_actions()
+            action = epsilon_greedy_policy(epsilon, action, permissible_actions)
 
             # take action and get updated game state
-            _, _, snake, food, reward = game.step(action)
+            done, _, snake, food, reward = game.step(action)
 
             # Get post action snake state
             post_state = State(snake, food).state
 
             # Train neural network
-            nn.train_on_timestep(pre_state, post_state, action, reward)
+            nn.train_on_timestep(pre_state, post_state, action, reward, done)
 
         # end while game.done()
         scores.append(game.score)
         print('Game:' + str(game_counter + 1) + '       ' + 'Score: ' + str(game.score))
+    plt.plot(scores)
+    plt.ylabel('Score')
+    plt.xlabel('Game Number')
+    plt.title("Score for Each Game")
+    plt.show()
 
 
 run_deep_q()
