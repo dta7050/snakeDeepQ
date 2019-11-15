@@ -5,7 +5,7 @@ from typing import List
 import time
 
 class SnakeGame:
-    def __init__(self, board_width = 20, board_height = 20, gui = False):
+    def __init__(self, board_width: int = 20, board_height: int = 20, gui: bool = False):
         """
         Initializes the snake game class. Sets the game score to zero,
         the game over bool to false, the board dimensions to the specified
@@ -19,7 +19,7 @@ class SnakeGame:
         self.board = {'width': board_width, 'height': board_height}  # dict containing game window dimensions
         self.gui = gui  # bool indicating whether or not to display the game
 
-    def start(self):
+    def start(self) -> (bool, int, List[List[int]], List[int]):
         """
         Creates the snake, creates a food point
         in a random location, and if the gui variable
@@ -90,11 +90,13 @@ class SnakeGame:
                 self.win.addch(point[1], point[0], 'b')
         self.win.getch()  # checks for button press
 
-    def step(self, key):
+    def step(self, key: int) -> (bool, int, List[List[int]], List[int]):
         """
-
+        Moves the snake, checks if it ate food, checks
+        if it hit the wall or itself, and then updates
+        the GUI
         :param key: The snake's direction of motion
-        :return:
+        :return: The snake, the score, whether the game is done, and the food location
         """
         # 0 - LEFT
         # 1 - DOWN
@@ -109,54 +111,85 @@ class SnakeGame:
         else:
             self.remove_last_point()
         self.check_collisions()
-        if self.gui: self.render()
+        if self.gui:
+            self.render()
         return self.generate_observations()
 
-    def create_new_point(self, key):
+    def create_new_point(self, key: int):
         """
-
-        :param key:
+        Creates a new head point in the direction
+        of the snakes motion (i.e. moves the snake).
+        :param key: The snake's direction of motion
         :return:
         """
         # Get current head
         new_point = [self.snake[0][0], self.snake[0][1]]
-        if key == 0:
+        if key == 0:  # moving left
             new_point[0] -= 1
-        elif key == 1:
+        elif key == 1:  # Moving down
             new_point[1] += 1
-        elif key == 2:
+        elif key == 2:  # Moving right
             new_point[0] += 1
-        elif key == 3:
+        elif key == 3:  # Moving up
             new_point[1] -= 1
-        self.snake.insert(0, new_point)
+        self.snake.insert(0, new_point)  # add the new point to the snake
 
     def remove_last_point(self):
-        self.snake.pop()
+        """
+        Removes the endpoint of the snake
+        :return:
+        """
+        self.snake.pop()  # remove the last point in the snake list
 
-    def food_eaten(self):
+    def food_eaten(self) -> bool:
+        """
+        Check if the head of the snake is at
+        the same coordinate point as the food
+        :return: a boolean stating whether or not snake ate food
+        """
         return self.snake[0] == self.food
 
     def check_collisions(self):
-        if (self.snake[0][0] == 0 or
-            self.snake[0][0] == self.board["width"] + 1 or
-            self.snake[0][1] == 0 or
-            self.snake[0][1] == self.board["height"] + 1 or
-            self.snake[0] in self.snake[1:]):
-            self.done = True
+        """
+        Check if the snake is in the wall or
+        collides with itself
+        :return:
+        """
+        if (self.snake[0][0] == 0 or  # if the snake is in the right wall
+            self.snake[0][0] == self.board["width"] + 1 or  # if the snake is in the left wall
+            self.snake[0][1] == 0 or  # if the snake is in the top wall
+            self.snake[0][1] == self.board["height"] + 1 or  # if the snake is in the bottom wall
+            self.snake[0] in self.snake[1:]):  # if the snake collides with itself
+            self.done = True  # sets bool to end game
 
-    def generate_observations(self):
+    def generate_observations(self) -> (bool, int, List[List[int]], List[int]):
+        """
+        Simply returns whether the game is running,
+        the snake's score, the list of snake body
+        points, and the food point
+        :return:
+        """
         return self.done, self.score, self.snake, self.food
 
     def render_destroy(self):
+        """
+        Disables the display window
+        :return:
+        """
         curses.endwin()
 
     def end_game(self):
-        if self.gui: self.render_destroy()
+        """
+        Calls render_destroy to disable the game window
+        :return:
+        """
+        if self.gui:
+            self.render_destroy()
         raise Exception("Game over")
 
 if __name__ == "__main__":
-    game = SnakeGame(gui = True)
+    game = SnakeGame(gui=True)
     game.start()
     for _ in range(20):
-        game.step(randint(0,3))
+        game.step(randint(0, 3))  # snake takes random movements
 
