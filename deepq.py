@@ -17,8 +17,8 @@ Contents:
     Function(s) for training network
     Functions(s) for updating policy and target networks
 """
-import snake_game
-import state
+from snake_game import *
+from state import *
 
 import random
 import tensorflow
@@ -28,6 +28,7 @@ import numpy as np
 from typing import List
 from keras.models import Sequential
 from keras.layers import Dense
+from keras.utils import to_categorical
 
 STATE_SIZE = 12
 ACTION_SET_SIZE = 4
@@ -38,6 +39,9 @@ RIGHT = 2
 UP = 3
 
 DIRECTIONS = [LEFT, DOWN, RIGHT, UP]
+
+# The greater this number, the less likely to choose a random action as opposed to the models predicted action
+MODEL_BIAS_FACTOR = 0.01
 
 
 class NeuralNetwork:
@@ -58,7 +62,7 @@ class NeuralNetwork:
 
         self.model.add(Dense(ACTION_SET_SIZE, activation='linear'))  # output layer
         self.model.compile(loss='mse', optimizer=opt)
-        print(self.model.summary())
+        # print(self.model.summary())
 
     def save_model(self, name: str):
         """
@@ -75,16 +79,46 @@ class NeuralNetwork:
         self.model.load(name)
 
 
-def epsilon_greedy_policy(epsilon, rand_num, action):
+def epsilon_greedy_policy(epsilon, action):
+    rand_num = np.random.rand()  # produces random number between 0 and 1
     if rand_num <= epsilon:
         action = random.randrange(ACTION_SET_SIZE)
-
     return action
-
-
-def q_learning(policy_net, target_net):
-    game = snake_game()
-
-    while True:
-        game.start()
         
+
+def run_deep_q():
+    """
+
+    :return:
+    """
+    # Initializations
+    game_counter = 0
+    nn = NeuralNetwork(1, [20], "adam")
+
+    while game_counter < 150:
+        # Create game object
+        game = SnakeGame(gui=True)
+        # start game
+        game.start()
+
+        while not game.done:
+            # update game state
+            _, _, snake, food = game.generate_observations()
+
+            # get pre state
+            pre_state = State(snake, food).state
+
+            # predict action to take using model
+            prediction = nn.model.predict(pre_state.reshape(pre_state, (1, 12)))
+            action = to_categorical(np.argmax(prediction[0]), num_classes=4)
+
+            # Use epsilon greedy action to either take predicted action or random action
+            # Takes random actions less often as more games are played
+            epsilon = np.random.rand() - (MODEL_BIAS_FACTOR * game_counter)
+            action = epsilon_greedy_policy(epsilon, action)
+
+            # take action
+            return
+
+
+run_deep_q()
