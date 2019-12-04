@@ -71,7 +71,7 @@ class SnakeGame:
         win = curses.newwin(self.board["width"] + 2, self.board["height"] + 2, 0, 0)  # sets window corner points
         curses.curs_set(0)  # sets the visibility to invisible
         win.nodelay(1)  # sets window to no delay mode (if no button is pressed, win.getch() returns -1)
-        win.timeout(200)  # calls win.getch() every 200ms
+        # win.timeout(200)  # calls win.getch() every 200ms
         self.win = win  # set the snake game variable, win, to the initialized window
         self.render()  # calls render function
 

@@ -81,7 +81,7 @@ class NeuralNetwork:
         :return: None
         """
         # Use the model to predict the q vector of the pre action state
-        predicted_pre_state_q_vector = self.model.predict(np.reshape(pre_state, (1, 12)))
+        predicted_pre_state_q_vector = self.model.predict(np.reshape(pre_state.state, (1, 12)))
         # Current q value is the index in the predicted pre state q vector corresponding to the action
         current_q_value = predicted_pre_state_q_vector[0][np.argmax(action)]
 
@@ -102,7 +102,7 @@ class NeuralNetwork:
         # This is now the target q vector to fit the model against
         target_q_vector = predicted_pre_state_q_vector
         # Use the target q vector to fit the model
-        self.model.fit(np.reshape(pre_state, (1, 12)), target_q_vector, epochs=1, verbose=0)
+        self.model.fit(np.reshape(pre_state.state, (1, 12)), target_q_vector, epochs=1, verbose=0)
 
 
 def model_loader() -> None:
@@ -125,6 +125,66 @@ def epsilon_greedy_policy(epsilon: float, action: int, permissible_actions: List
     if rand_num <= epsilon:
         action = random.choice(permissible_actions)
     return action
+
+
+def get_action(state, action):
+    """
+
+    :param state: The current state of the environment
+    :param action: The action as predicted by the model
+    :return: A new action based on the snake's direction of motion
+    """
+    motion_dirs = state.motion_dirs  # type: List[bool]
+    dir_index = -1  # type: int
+    action_to_take = -1  # type: int
+
+    # iterate through motion directions
+    for i in range(len(motion_dirs)):
+        if motion_dirs[i]:  # if a direction is true
+            dir_index = i  # store the index associated with that direction
+            break  # break from the loop
+
+    if dir_index == 0:  # corresponds to left movement
+        if action == 0:
+            # traveling left and turning left (down)
+            action_to_take = DOWN
+        elif action == 1:
+            # traveling left and continuing forward (left)
+            action_to_take = LEFT
+        elif action == 2:
+            # traveling left and turning right (up)
+            action_to_take = UP
+    elif dir_index == 1:
+        if action == 0:
+            # traveling down and turning left (right)
+            action_to_take = RIGHT
+        elif action == 1:
+            # traveling down and continuing forward (down)
+            action_to_take = DOWN
+        elif action == 2:
+            # traveling Down and turning right (left)
+            action_to_take = LEFT
+    elif dir_index == 2:
+        if action == 0:
+            # traveling right and turning left (up)
+            action_to_take = UP
+        elif action == 1:
+            # traveling right and continuing forward (right)
+            action_to_take = RIGHT
+        elif action == 2:
+            # traveling right and turning right (down)
+            action_to_take = DOWN
+    elif dir_index == 3:
+        if action == 0:
+            # traveling up and turning left (left)
+            action_to_take = LEFT
+        elif action == 1:
+            # traveling up and continuing forward (up)
+            action_to_take = UP
+        elif action == 2:
+            # traveling up and turning right (right)
+            action_to_take = RIGHT
+    return action_to_take
 
 
 def run_deep_q(com: str) -> str:
@@ -154,11 +214,12 @@ def run_deep_q(com: str) -> str:
         while not game.done:
 
             # get snake state
-            state = State(snake, food).state
+            state = State(snake, food)
 
             # predict action to take using model
-            prediction = model.predict(np.reshape(state, (1, 12)))
-            action = np.argmax(prediction[0])
+            prediction = model.predict(np.reshape(state.state, (1, 12)))
+            predicted_action = np.argmax(prediction[0])
+            action = get_action(state, predicted_action)
 
             # take action and get updated game state
             done, _, snake, food, reward = game.step(action)
@@ -186,11 +247,12 @@ def run_deep_q(com: str) -> str:
                 # print("Snake: " + str(snake))
 
                 # get pre action snake state
-                pre_state = State(snake, food).state
+                pre_state = State(snake, food)
 
                 # predict action to take using model
-                prediction = nn.model.predict(np.reshape(pre_state, (1, 12)))
-                action = np.argmax(prediction[0])
+                prediction = nn.model.predict(np.reshape(pre_state.state, (1, 12)))
+                predicted_action = np.argmax(prediction[0])
+                action = get_action(pre_state, predicted_action)
 
                 # Use epsilon greedy action to either take predicted action or random action
                 # Takes random actions less often as more games are played
@@ -224,7 +286,7 @@ def run_deep_q(com: str) -> str:
         return "Successfully trained on " + str(NUM_GAMES) + ' games.'
 
     else:
-        return "Incorrect Command Line Argument. Enter eiher 'train' or 'simulate'."
+        return "Incorrect Command Line Argument. Enter either 'train' or 'simulate'."
 
 
 if __name__ == '__main__':

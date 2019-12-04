@@ -17,9 +17,9 @@ UP_DIR = [0, -1]
 DIRECTIONS = [UP, RIGHT, DOWN, LEFT]
 
 STATE_SIZE = 12
-ACTION_SET_SIZE = 4
+ACTION_SET_SIZE = 3
 
-NUM_GAMES = 500
+NUM_GAMES = 100
 
 # MODEL PARAMETERS
 # The greater this number, the less likely to choose a random action as opposed to the models predicted action
