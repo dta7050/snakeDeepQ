@@ -28,6 +28,7 @@ import os
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+from time import sleep
 
 from typing import List
 from keras.models import Sequential
@@ -46,7 +47,7 @@ class NeuralNetwork:
         """
         self.model = Sequential()  # initialize the model
 
-        self.model.add(Dense(100, input_dim=12))  # input layer
+        self.model.add(Dense(100, input_dim=STATE_SIZE))  # input layer
 
         for i in range(num_layers):
             self.model.add(Dense(num_neurons[i], activation='relu'))  # initialize hidden layers
@@ -81,7 +82,7 @@ class NeuralNetwork:
         :return: None
         """
         # Use the model to predict the q vector of the pre action state
-        predicted_pre_state_q_vector = self.model.predict(np.reshape(pre_state.state, (1, 12)))
+        predicted_pre_state_q_vector = self.model.predict(np.reshape(pre_state.state, (1, STATE_SIZE)))
         # Current q value is the index in the predicted pre state q vector corresponding to the action
         current_q_value = predicted_pre_state_q_vector[0][np.argmax(action)]
 
@@ -94,7 +95,7 @@ class NeuralNetwork:
             # Use Bellman Equation to calculate the target q value for the post action state
             target_post_state_q = current_q_value + \
                                   LEARNING_RATE*(reward + (GAMMA *
-                                                 np.amax(self.model.predict(np.reshape(post_state, (1, 12)))[0]))
+                                                 np.amax(self.model.predict(np.reshape(post_state, (1, STATE_SIZE)))[0]))
                                                  - current_q_value)
 
         # Place the target post state q into its corresponding spot in the predicted pre state q vector
@@ -102,7 +103,7 @@ class NeuralNetwork:
         # This is now the target q vector to fit the model against
         target_q_vector = predicted_pre_state_q_vector
         # Use the target q vector to fit the model
-        self.model.fit(np.reshape(pre_state.state, (1, 12)), target_q_vector, epochs=1, verbose=0)
+        self.model.fit(np.reshape(pre_state.state, (1, STATE_SIZE)), target_q_vector, epochs=1, verbose=0)
 
 
 def model_loader() -> None:
@@ -217,9 +218,12 @@ def run_deep_q(com: str) -> str:
             state = State(snake, food)
 
             # predict action to take using model
-            prediction = model.predict(np.reshape(state.state, (1, 12)))
+            prediction = model.predict(np.reshape(state.state, (1, STATE_SIZE)))
             predicted_action = np.argmax(prediction[0])
             action = get_action(state, predicted_action)
+
+            # PLAYBACK SLEEPER
+            sleep(2)
 
             # take action and get updated game state
             done, _, snake, food, reward = game.step(action)
@@ -250,7 +254,7 @@ def run_deep_q(com: str) -> str:
                 pre_state = State(snake, food)
 
                 # predict action to take using model
-                prediction = nn.model.predict(np.reshape(pre_state.state, (1, 12)))
+                prediction = nn.model.predict(np.reshape(pre_state.state, (1, STATE_SIZE)))
                 predicted_action = np.argmax(prediction[0])
                 action = get_action(pre_state, predicted_action)
 

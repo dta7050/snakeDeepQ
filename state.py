@@ -24,6 +24,7 @@
 
 from constants import *
 from typing import List
+from math import sqrt, pow, atan2, pi
 import numpy as np
 
 
@@ -69,9 +70,11 @@ class State:
         self.get_blocked_dirs(snake)
         self.get_motion_dirs(snake)
         self.get_food_dirs(snake, food)
+        self.distance = self.get_distance(snake, food)
+        self.angle = self.get_angle(snake, food)
 
         # Create full state list
-        self.state = np.array(self.blocked_dirs + self.motion_dirs + self.food_dirs)  # type: np.ndarray
+        self.state = np.array(self.blocked_dirs + self.motion_dirs + self.food_dirs + [self.distance, self.angle])
 
     def get_blocked_dirs(self, snake: List[List[int]]) -> None:
         """
@@ -186,6 +189,40 @@ class State:
         elif self.motion_dirs[2]:
             return [DOWN, RIGHT, UP]
         return [LEFT, RIGHT, UP]
+
+    def get_distance(self, snake: List[List[int]], food: List[int]) -> int:
+        """
+        Calculates the distance between the snake head point and the food point using the Pythagorean Theorem.
+        Normalizes the distance to a value between 0 and 1 by dividing the
+        :param snake: List of points [x,y] of snake
+        :param food: [x,y] coordinates of food point
+        :return: int
+        """
+
+        # Get array describing x and y components of distance of snake head from food (food point - head point)
+        distance_comps = np.array(food) - np.array(snake[0])
+        # Compute distance using components, using the pythagorean theorem
+        dist = sqrt(pow(abs(distance_comps[0]), 2) + pow(abs(distance_comps[1]), 2))
+        # Normalize distance by dividing it by the maximum possible distance (MAX_DIST in constants.py)
+        norm_dist = dist/MAX_DIST
+
+        return norm_dist
+
+    def get_angle(self, snake: List[List[int]], food: List[int]) -> int:
+        """
+        Gets a value between 0 and 1 corresponding to the angle between the head of the snake and the food point.
+        :param snake: List of points [x,y] of snake
+        :param food: [x,y] coordinates of food point
+        :return: int
+        """
+        # Get array describing x and y components of distance of snake head from food (food point - head point)
+        distance_comps = np.array(food) - np.array(snake[0])
+        # Caluclate the inverse tangent to get an angle in radians, using atan2() to get the correct quadrant
+        angle = atan2(distance_comps[1],distance_comps[0])
+        # Map the output of the atan2 function to a value between 0 and 1
+        norm_angle = np.interp(angle, [-pi, pi], [0, 1])
+
+        return norm_angle
 
 
 def get_snake_direction(snake: List[List[int]]) -> np.ndarray:

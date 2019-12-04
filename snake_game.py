@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*- 
 import curses
+from constants import *
 from random import randint
 from typing import List
 
 
 class SnakeGame:
-    def __init__(self, board_width: int = 20, board_height: int = 20, gui: bool = False):
+    def __init__(self, board_width: int = WIDTH, board_height: int = HEIGHT, gui: bool = False):
         """
         Initializes the snake game class. Sets the game score to zero,
         the game over bool to false, the board dimensions to the specified
@@ -42,13 +43,13 @@ class SnakeGame:
         consists of three points
         :return: None
         """
-        x = randint(5, self.board["width"] - 5)  # generate random x coordinate
-        y = randint(5, self.board["height"] - 5)  # generate random y coordinate
+        x = randint(SNAKE_SIZE, self.board["width"] - SNAKE_SIZE + 1)  # generate random x coordinate
+        y = randint(SNAKE_SIZE, self.board["height"] - SNAKE_SIZE + 1)  # generate random y coordinate
         self.snake = []  # empty list to store snake points
         vertical = randint(0, 1) == 0  # 50% chance of snake starting vertical
-        for i in range(3):
+        for i in range(SNAKE_SIZE):
             point = [x + i, y] if vertical else [x, y + i]  # creates the points of the snake
-            self.snake.insert(0, point)  # adds it to the snake list
+            self.snake.append(point)  # adds it to the snake list
 
     def generate_food(self) -> None:
         """
@@ -71,7 +72,7 @@ class SnakeGame:
         win = curses.newwin(self.board["width"] + 2, self.board["height"] + 2, 0, 0)  # sets window corner points
         curses.curs_set(0)  # sets the visibility to invisible
         win.nodelay(1)  # sets window to no delay mode (if no button is pressed, win.getch() returns -1)
-        # win.timeout(200)  # calls win.getch() every 200ms
+        win.timeout(200)  # calls win.getch() every 200ms
         self.win = win  # set the snake game variable, win, to the initialized window
         self.render()  # calls render function
 
@@ -82,7 +83,7 @@ class SnakeGame:
         """
         self.win.clear()  # clears the game window
         self.win.border(0)  # draws the walls
-        self.win.addstr(0, 2, 'Score : ' + str(self.score) + ' ')  # displays the score
+        self.win.addstr(0, 2, 'S: ' + str(self.score) + ' ')  # displays the score
         self.win.addch(self.food[1], self.food[0], 'F')  # displays the food point
         for i, point in enumerate(self.snake):  # adds the snake points
             if i == 0:
@@ -118,8 +119,8 @@ class SnakeGame:
             self.reward = 10
             self.generate_food()
         else:
-            self.reward = 1
-            self.score += 1
+            self.reward = 0
+            self.score += 0
             self.remove_last_point()
         if self.gui:
             self.render()
