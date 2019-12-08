@@ -33,6 +33,7 @@ from time import sleep
 from typing import List
 from keras.models import Sequential
 from keras.layers import Dense
+from keras.layers import Dropout
 from keras.models import load_model
 
 
@@ -47,10 +48,11 @@ class NeuralNetwork:
         """
         self.model = Sequential()  # initialize the model
 
-        self.model.add(Dense(100, input_dim=STATE_SIZE))  # input layer
+        self.model.add(Dense(STATE_SIZE, input_dim=STATE_SIZE))  # input layer
 
         for i in range(num_layers):
             self.model.add(Dense(num_neurons[i], activation='relu'))  # initialize hidden layers
+            self.model.add(Dropout(0.5))
 
         self.model.add(Dense(ACTION_SET_SIZE, activation='softmax'))  # output layer
         self.model.compile(loss='mse', optimizer=opt)
@@ -234,7 +236,7 @@ def run_deep_q(com: str) -> str:
     elif com == 'train':
 
         # Initializations
-        nn = NeuralNetwork(2, [100, 50], "adam")
+        nn = NeuralNetwork(4, [200, 100, 50, 25], "adam")
         scores = []
 
         for game_counter in range(NUM_GAMES):
