@@ -26,6 +26,7 @@ from constants import *
 import sys
 import os
 import random
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from time import sleep
@@ -40,29 +41,35 @@ from keras.optimizers import Adam
 
 class NeuralNetwork:
 
-    def __init__(self, num_layers: int, num_neurons: List[int], opt: str) -> None:
+    def __init__(self, num_layers: int, num_neurons: List[int], opt: str, load: bool = False) -> None:
         """
         For now, network is just simple, vanilla network
         :param num_layers: number of input layers
         :param num_neurons: number of neurons in each hidden layer
         :param opt: optimizer to use in network
         """
-        self.model = Sequential()  # initialize the model
+        if load:
+            self.model = model_loader()
+            f = open('memory.pickle', 'rb')
+            self.memory = pickle.load(f)
+            f.close()
+        else:
+            self.model = Sequential()  # initialize the model
 
-        self.memory = []
+            self.memory = []
 
-        if opt == 'default':
-            opt = Adam(LEARNING_RATE)
+            if opt == 'default':
+                opt = Adam(LEARNING_RATE)
 
-        self.model.add(Dense(120, input_dim=STATE_SIZE))  # input layer
+            self.model.add(Dense(STATE_SIZE, input_dim=STATE_SIZE))  # input layer
 
-        for i in range(num_layers):
-            self.model.add(Dense(num_neurons[i], activation='relu'))  # initialize hidden layers
-            self.model.add(Dropout(0.15))
+            for i in range(num_layers):
+                self.model.add(Dense(num_neurons[i], activation='relu'))  # initialize hidden layers
+                self.model.add(Dropout(0.2))
 
-        self.model.add(Dense(ACTION_SET_SIZE, activation='softmax'))  # output layer
-        self.model.compile(loss='mse', optimizer=opt)
-        # print(self.model.summary())
+            self.model.add(Dense(ACTION_SET_SIZE, activation='softmax'))  # output layer
+            self.model.compile(loss='mse', optimizer=opt)
+            # print(self.model.summary())
 
     def save_model(self) -> None:
         """
@@ -308,7 +315,7 @@ def run_deep_q(com: str) -> str:
             action = get_action(state, predicted_action)
 
             # PLAYBACK SLEEPER
-            sleep(0.1)
+            sleep(0.01)
 
             # take action and get updated game state
             done, _, snake, food, reward = game.step(action)
@@ -317,7 +324,7 @@ def run_deep_q(com: str) -> str:
 
             if post_state.motion_dirs == post_state.food_dirs:
                 reward += 0.1
-                game.score += 0.1
+                # game.score += 0.1
             else:
                 reward -= 0.1
 
@@ -343,7 +350,7 @@ def run_deep_q(com: str) -> str:
 
         # Initializations
         nn = NeuralNetwork(2, [120, 120], "default")
-        scores = []
+        scores = [0]
 
         steps = []
 
@@ -394,12 +401,12 @@ def run_deep_q(com: str) -> str:
                 # take action and get updated game state
                 done, _, snake, food, reward = game.step(action)
 
-                # if reward == 10:
-                #     timesteps = 0
-                # if timesteps >= WIDTH * 100:
-                #     reward -= 10
-                #     timesteps = 0
-                #     game.done = True
+                if reward == 10:
+                    timesteps = 0
+                if timesteps >= WIDTH * 500:
+                    reward -= 200
+                    timesteps = 0
+                    game.done = True
 
                 # Get post action snake state
                 post_state = State(snake, food)
@@ -407,7 +414,7 @@ def run_deep_q(com: str) -> str:
                 # Add reward for traveling towards food
                 if post_state.motion_dirs == post_state.food_dirs:
                     reward += 0.1
-                    game.score += 0.1
+                    # game.score += 0.1
                 else:
                     reward -= 0.1
 
@@ -423,6 +430,10 @@ def run_deep_q(com: str) -> str:
                 nn.train_on_timestep(pre_state.state, post_state.state, action, reward, done)
                 steps.append((pre_state, post_state.state, action, reward, done))
 
+                if game.score > max(scores):
+                    reward += 1000
+                    nn.add_to_memory(pre_state.state, post_state.state, action, reward, done)
+
                 timesteps += 1
 
             # end while game.done()
@@ -436,6 +447,114 @@ def run_deep_q(com: str) -> str:
 
             # save model
             nn.save_model()
+            f = open('memory.pickle', 'wb')
+            pickle.dump(nn.memory, f)
+            f.close()
+
+            # retrain on memory
+            nn.train_on_memory()
+    elif com == 'retrain':
+        nn = NeuralNetwork(2, [120, 120], "default", load=True)
+
+        scores = [2]
+
+        steps = []
+
+        for game_counter in range(50):
+            # Create game object
+            game = SnakeGame(gui=False)
+            # start game
+            game.start()
+
+            # timesteps
+            timesteps = 0
+
+            # NEW (INITIALIZE GAME)
+            _, _, snake, food, _ = game.generate_observations()
+            state1 = State(snake, food)
+            action = get_action(state1, 1)
+            done, _, snake, food, reward = game.step(action)
+            state2 = State(snake, food).state
+            nn.add_to_memory(state1.state, state2, action, reward, done)
+            nn.train_on_memory()
+
+            while not game.done:
+                # print("Score: " + str(game.score))
+                # update game state
+                _, _, snake, food, _ = game.generate_observations()
+
+                # print("Snake: " + str(snake))
+
+                # get pre action snake state
+                pre_state = State(snake, food)
+
+                # predict action to take using model
+                prediction = nn.model.predict(np.reshape(pre_state.state, (1, STATE_SIZE)))
+                predicted_action = np.argmax(prediction[0])
+                action = get_action(pre_state, predicted_action)
+
+                # Use epsilon greedy action to either take predicted action or random action
+                # Takes random actions less often as more games are played
+                epsilon = -1
+                # epsilon = np.random.rand() - (MODEL_BIAS_FACTOR * game_counter)
+                permissible_actions = State(snake, food).get_permissible_actions()
+                action = epsilon_greedy_policy(epsilon, action, permissible_actions)
+
+                # PLAYBACK SLEEPER
+                # sleep(0.1)
+
+                # take action and get updated game state
+                done, _, snake, food, reward = game.step(action)
+
+                if reward == 10:
+                    timesteps = 0
+                if timesteps >= WIDTH * 500:
+                    reward -= 200
+                    timesteps = 0
+                    game.done = True
+
+                # Get post action snake state
+                post_state = State(snake, food)
+
+                # Add reward for traveling towards food
+                if post_state.motion_dirs == post_state.food_dirs:
+                    reward += 0.1
+                    # game.score += 0.1
+                else:
+                    reward -= 0.1
+
+                # Train neural network
+                # print("STEP -------------------------")
+                # print("pre state", pre_state.state)
+                # print("post state", post_state)
+                # print("motion_dirs: ", post_state.motion_dirs)
+                # print("blocked_dirs: ", post_state.blocked_dirs)
+                # print("action", action)
+                # print("reward", reward)
+                # print("done", done)
+                nn.train_on_timestep(pre_state.state, post_state.state, action, reward, done)
+                steps.append((pre_state, post_state.state, action, reward, done))
+
+                if game.score > max(scores):
+                    reward += 1000
+                    nn.add_to_memory(pre_state.state, post_state.state, action, reward, done)
+
+                timesteps += 1
+
+            # end while game.done()
+            if game.score > 1:
+                nn.add_to_memory(pre_state.state, post_state.state, action, reward, done)
+            elif random.uniform(0, 1) > 0.9:
+                nn.add_to_memory(pre_state.state, post_state.state, action, reward, done)
+
+            scores.append(game.score)
+            print('Game:' + str(game_counter + 1) + ' | ' + 'Score: ' + str(game.score))
+
+            # save model
+            nn.save_model()
+            f = open('memory.pickle', 'wb')
+            pickle.dump(nn.memory, f)
+            f.close()
 
             # retrain on memory
             nn.train_on_memory()
