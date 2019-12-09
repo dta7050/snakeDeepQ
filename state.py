@@ -33,18 +33,17 @@ class State:
         """
         Initializes the State object, given a snake
 
-        The State is a numpy array containing 12 boolean integers ( 0 or 1 ):
-            state = np.array(blocked_dirs[0 through 3], motion_dirs[0 through 3], food_dirs[0 through 3])
+        The State is a numpy array containing 11 boolean integers ( 0 or 1 ):
+            state = np.array(blocked_dirs[0 through 2], motion_dirs[0 through 3], food_dirs[0 through 3])
 
-            an example state looks like np.ndarray(0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1)
+            an example state looks like np.ndarray(0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0)
 
         The State is comprised of:
 
             blocked_dirs; List[int]:
                 blocked_dirs[0] = LEFT BLOCKED?  (1 = YES, 0 = NO)
-                blocked_dirs[1] = DOWN BLOCKED?  (1 = YES, 0 = NO)
+                blocked_dirs[1] = FORWARD BLOCKED?  (1 = YES, 0 = NO)
                 blocked_dirs[2] = RIGHT BLOCKED? (1 = YES, 0 = NO)
-                blocked_dirs[3] = UP BLOCKED?    (1 = YES, 0 = NO)
 
             motion_dirs; List[int]:
                 motion_dirs[0] = LEFT TRAVELING?  (1 = YES, 0 = NO)
@@ -62,7 +61,7 @@ class State:
         :param food: [x,y] coordinate of food point
         """
         # Initialize state variables
-        self.blocked_dirs = [0] * 4  # type: List[int]
+        self.blocked_dirs = [0] * 3  # type: List[int]
         self.motion_dirs = [0] * 4  # type: List[int]
         self.food_dirs = [0] * 4  # type: List[int]
 
@@ -70,41 +69,85 @@ class State:
         self.get_blocked_dirs(snake)
         self.get_motion_dirs(snake)
         self.get_food_dirs(snake, food)
-        self.distance = self.get_distance(snake, food)
-        self.angle = self.get_angle(snake, food)
+        # self.distance = self.get_distance(snake, food)
+        # self.angle = self.get_angle(snake, food)
 
         # Create full state list
-        self.state = np.array(self.blocked_dirs + self.motion_dirs + self.food_dirs + [self.distance, self.angle])
+        self.state = np.array(self.blocked_dirs + self.motion_dirs + self.food_dirs )
 
     def get_blocked_dirs(self, snake: List[List[int]]) -> None:
         """
         Given a snake, calculate the next action directions that are blocked.
         Directions can be blocked either by the snakes body or by the boundaries of the game world.
 
-        blocked_dirs[0] = LEFT BLOCKED?  (1 = YES, 0 = NO)
-        blocked_dirs[1] = DOWN BLOCKED?  (1 = YES, 0 = NO)
-        blocked_dirs[2] = RIGHT BLOCKED? (1 = YES, 0 = NO)
-        blocked_dirs[3] = UP BLOCKED?    (1 = YES, 0 = NO)
+        blocked_dirs[0] = LEFT BLOCKED?     (1 = YES, 0 = NO)
+        blocked_dirs[1] = FORWARD BLOCKED?  (1 = YES, 0 = NO)
+        blocked_dirs[2] = RIGHT BLOCKED?    (1 = YES, 0 = NO)
 
         :param snake: List of points [x,y] of snake
         :return: None
         """
-        # LEFT
-        point = np.array(snake[0]) + np.array(LEFT_DIR)
-        self.blocked_dirs[LEFT] = int(point.tolist() in snake or
-                                   point[0] == 0 or point[1] == 0 or point[0] == 21 or point[1] == 21)
+
+        # Get direction of snake
+        snake_dir = get_snake_direction(snake)
+
+        # Find direction and set motion dir list
+        # LEFT TRAVELING
+        if np.array_equal(snake_dir, np.array(LEFT_DIR)):
+            # LEFT (DOWN)
+            point = np.array(snake[0]) + np.array(DOWN_DIR)
+            self.blocked_dirs[0] = int(point.tolist() in snake or
+                                   point[0] == 0 or point[1] == 0 or point[0] >= (WIDTH + 1) or point[1] >= (WIDTH + 1))
+            # FORWARD (LEFT)
+            point = np.array(snake[0]) + np.array(LEFT_DIR)
+            self.blocked_dirs[1] = int(point.tolist() in snake or
+                                   point[0] == 0 or point[1] == 0 or point[0] >= (WIDTH + 1) or point[1] >= (WIDTH + 1))
+            # RIGHT (UP)
+            point = np.array(snake[0]) + np.array(UP_DIR)
+            self.blocked_dirs[2] = int(point.tolist() in snake or
+                                   point[0] == 0 or point[1] == 0 or point[0] >= (WIDTH + 1) or point[1] >= (WIDTH + 1))
         # DOWN
-        point = np.array(snake[0]) + np.array(DOWN_DIR)
-        self.blocked_dirs[DOWN] = int(point.tolist() in snake or
-                                   point[0] == 0 or point[1] == 0 or point[0] == 21 or point[1] == 21)
+        elif np.array_equal(snake_dir, np.array(DOWN_DIR)):
+            # LEFT (RIGHT)
+            point = np.array(snake[0]) + np.array(RIGHT_DIR)
+            self.blocked_dirs[0] = int(point.tolist() in snake or
+                                   point[0] == 0 or point[1] == 0 or point[0] >= (WIDTH + 1) or point[1] >= (WIDTH + 1))
+            # FORWARD (DOWN)
+            point = np.array(snake[0]) + np.array(DOWN_DIR)
+            self.blocked_dirs[1] = int(point.tolist() in snake or
+                                   point[0] == 0 or point[1] == 0 or point[0] >= (WIDTH + 1) or point[1] >= (WIDTH + 1))
+            # RIGHT (LEFT)
+            point = np.array(snake[0]) + np.array(LEFT_DIR)
+            self.blocked_dirs[2] = int(point.tolist() in snake or
+                                   point[0] == 0 or point[1] == 0 or point[0] >= (WIDTH + 1) or point[1] >= (WIDTH + 1))
         # RIGHT
-        point = np.array(snake[0]) + np.array(RIGHT_DIR)
-        self.blocked_dirs[RIGHT] = int(point.tolist() in snake or
-                                   point[0] == 0 or point[1] == 0 or point[0] == 21 or point[1] == 21)
+        elif np.array_equal(snake_dir, np.array(RIGHT_DIR)):
+            # LEFT (UP)
+            point = np.array(snake[0]) + np.array(UP_DIR)
+            self.blocked_dirs[0] = int(point.tolist() in snake or
+                                   point[0] == 0 or point[1] == 0 or point[0] >= (WIDTH + 1) or point[1] >= (WIDTH + 1))
+            # FORWARD (RIGHT)
+            point = np.array(snake[0]) + np.array(RIGHT_DIR)
+            self.blocked_dirs[1] = int(point.tolist() in snake or
+                                   point[0] == 0 or point[1] == 0 or point[0] >= (WIDTH + 1) or point[1] >= (WIDTH + 1))
+            # RIGHT (DOWN)
+            point = np.array(snake[0]) + np.array(DOWN_DIR)
+            self.blocked_dirs[2] = int(point.tolist() in snake or
+                                   point[0] == 0 or point[1] == 0 or point[0] >= (WIDTH + 1) or point[1] >= (WIDTH + 1))
         # UP
-        point = np.array(snake[0]) + np.array(UP_DIR)
-        self.blocked_dirs[UP] = int(point.tolist() in snake or
-                                   point[0] == 0 or point[1] == 0 or point[0] == 21 or point[1] == 21)
+        elif np.array_equal(snake_dir, np.array(UP_DIR)):
+            # LEFT (LEFT)
+            point = np.array(snake[0]) + np.array(LEFT_DIR)
+            self.blocked_dirs[0] = int(point.tolist() in snake or
+                                   point[0] == 0 or point[1] == 0 or point[0] >= (WIDTH + 1) or point[1] >= (WIDTH + 1))
+            # FORWARD (UP)
+            point = np.array(snake[0]) + np.array(UP_DIR)
+            self.blocked_dirs[1] = int(point.tolist() in snake or
+                                   point[0] == 0 or point[1] == 0 or point[0] >= (WIDTH + 1) or point[1] >= (WIDTH + 1))
+            # RIGHT (RIGHT)
+            point = np.array(snake[0]) + np.array(RIGHT_DIR)
+            self.blocked_dirs[2] = int(point.tolist() in snake or
+                                   point[0] == 0 or point[1] == 0 or point[0] >= (WIDTH + 1) or point[1] >= (WIDTH + 1))
 
     def get_motion_dirs(self, snake: List[List[int]]) -> None:
         """
@@ -182,13 +225,17 @@ class State:
         result in the snake not colliding with itself
         :return: list of the actions that snake can take
         """
+        # TRAVELING LEFT
         if self.motion_dirs[0]:
-            return [LEFT, DOWN, UP]
+            return [DOWN, LEFT, UP]
+        # TRAVELING DOWN
         elif self.motion_dirs[1]:
-            return [LEFT, DOWN, RIGHT]
+            return [RIGHT, DOWN, LEFT]
+        # TRAVELING RIGHT
         elif self.motion_dirs[2]:
-            return [DOWN, RIGHT, UP]
-        return [LEFT, RIGHT, UP]
+            return [UP, RIGHT, DOWN]
+        # TRAVELING UP
+        return [LEFT, UP, RIGHT]
 
     def get_distance(self, snake: List[List[int]], food: List[int]) -> int:
         """

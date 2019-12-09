@@ -43,8 +43,12 @@ class SnakeGame:
         consists of three points
         :return: None
         """
-        x = randint(SNAKE_SIZE, self.board["width"] - SNAKE_SIZE + 1)  # generate random x coordinate
-        y = randint(SNAKE_SIZE, self.board["height"] - SNAKE_SIZE + 1)  # generate random y coordinate
+        # NEW, NOT RANDOM
+        x = self.board["width"] // 2
+        y = x
+
+        # x = randint(SNAKE_SIZE, self.board["width"] - SNAKE_SIZE + 1)  # generate random x coordinate
+        # y = randint(SNAKE_SIZE, self.board["height"] - SNAKE_SIZE + 1)  # generate random y coordinate
         self.snake = []  # empty list to store snake points
         vertical = randint(0, 1) == 0  # 50% chance of snake starting vertical
         for i in range(SNAKE_SIZE):
@@ -111,11 +115,11 @@ class SnakeGame:
         # Game over check and reward assignment
         if self.done:  # if the snake dies, end the game
             self.reward = -10
-            self.score -= 10
+            self.score -= 0
             self.end_game()
             return self.generate_observations()
         if self.food_eaten():
-            self.score += 10
+            self.score += 1
             self.reward = 10
             self.generate_food()
         else:

@@ -21,17 +21,17 @@ UP_DIR = [0, -1]
 
 DIRECTIONS = [UP, RIGHT, DOWN, LEFT]
 
-SNAKE_SIZE = 3
+SNAKE_SIZE = 2
 
 MAX_DIST = sqrt(pow(WIDTH-1, 2) + pow(HEIGHT-1, 2))  # Maximum distance a snake head point can be from food
 
-STATE_SIZE = 14
+STATE_SIZE = 11
 ACTION_SET_SIZE = 3
 
-NUM_GAMES = 5000
+NUM_GAMES = 150
 
 # MODEL PARAMETERS
 # The greater this number, the less likely to choose a random action as opposed to the models predicted action
 MODEL_BIAS_FACTOR = 0.01
 GAMMA = 0.9  # Discount factor
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0005
