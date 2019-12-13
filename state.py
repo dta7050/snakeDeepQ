@@ -13,12 +13,12 @@
 #
 # GAME WORLD ----------------------------------------------------------------------------------------------------------
 #
-#   (0,0) ---------- (21, 0)
+#   (0,0) ---------- (WIDTH, 0)
 #         |        |
 #         |        |
 #         |        |
 #         |        |
-# (0, 21) ---------- (21, 21)
+# (0, HEIGHT) ---------- (WIDTH, HEIGHT)
 #
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -33,10 +33,10 @@ class State:
         """
         Initializes the State object, given a snake
 
-        The State is a numpy array containing 11 boolean integers ( 0 or 1 ):
-            state = np.array(blocked_dirs[0 through 2], motion_dirs[0 through 3], food_dirs[0 through 3])
+        The State is a numpy array containing 11 boolean integers ( 0 or 1 ) and 2 float values:
+            state = np.array(blocked_dirs[], motion_dirs[], food_dirs[], distance, angle)
 
-            an example state looks like np.ndarray(0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0)
+            an example state looks like np.ndarray(0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0.54, 0.33)
 
         The State is comprised of:
 
@@ -57,6 +57,9 @@ class State:
                 food_dirs[2] = FOOD TO RIGHT OF SNAKE HEAD?  (1 = YES, 0 = NO)
                 food_dirs[3] = FOOD UP FROM SNAKE HEAD?      (1 = YES, 0 = NO)
 
+            distance; (float) the normalized distance [0, 1] between the snake's head and the food point
+            angle; (float) the normalized angle [0, 1] between the snake's head and the food point
+
         :param snake: List of points [x,y] of snake
         :param food: [x,y] coordinate of food point
         """
@@ -69,11 +72,11 @@ class State:
         self.get_blocked_dirs(snake)
         self.get_motion_dirs(snake)
         self.get_food_dirs(snake, food)
-        # self.distance = self.get_distance(snake, food)
-        # self.angle = self.get_angle(snake, food)
+        self.distance = self.get_distance(snake, food)
+        self.angle = self.get_angle(snake, food)
 
         # Create full state list
-        self.state = np.array(self.blocked_dirs + self.motion_dirs + self.food_dirs )
+        self.state = np.array(self.blocked_dirs + self.motion_dirs + self.food_dirs + [self.distance, self.angle])
 
     def get_blocked_dirs(self, snake: List[List[int]]) -> None:
         """

@@ -5,15 +5,17 @@ Contents:
     Neural Network class:
         Input Arguments:
             Number of layers
-            Type of layers (dense, LSTM, convolution, ...)
             Number of Neurons in each layer
             Optimizer type
+            Load option
             ...
         Methods:
             init(): defines important parameters for the model creation
             save_model(): saves network weights
             load_model(): loads network weights
             train_on_timestep(): trains the model using Q learning
+            add_to_memory(): adds training data to memory list
+            train_on_memory(): trains the model over a selected set from the memory list
     model_loader(): loads a previously saved model
     epsilon_greedy_policy(): picks action for snake to take
     run_deep_q(): runs the deep q learning algorithm
@@ -96,44 +98,35 @@ class NeuralNetwork:
         :param done: tells if game is over. True = over, False = not over
         :return: None
         """
+        # Use the model to predict the q vector of the pre action state
+        predicted_pre_state_q_vector = self.model.predict(np.reshape(pre_state, (1, STATE_SIZE)))
+        # Current q value is the index in the predicted pre state q vector corresponding to the action
+        current_q_value = predicted_pre_state_q_vector[0][np.argmax(action)]
 
-        target = reward
-        if not done:
-            target = reward + GAMMA * np.amax(self.model.predict(np.reshape(post_state, (1, STATE_SIZE)))[0])
-        target_f = self.model.predict(np.reshape(pre_state, (1, STATE_SIZE)))
-        target_f[0][np.argmax(action)] = target
-        self.model.fit(np.reshape(pre_state, (1, STATE_SIZE)), target_f, epochs=1, verbose=0)
+        if done:
+            # Use Bellman Equation to calculate the target q value.
+            # Here we consider the maximum predicted Q value of the new state as zero,
+            # since this new value is an invalid state deemed by the reules of the game
+            target_post_state_q = current_q_value + LEARNING_RATE2*(reward - current_q_value)
+        else:
+            # Use Bellman Equation to calculate the target q value for the post action state
+            target_post_state_q = current_q_value + \
+                                  LEARNING_RATE2*(reward + (GAMMA *
+                                                 np.amax(self.model.predict(np.reshape(post_state, (1, STATE_SIZE)))[0]))
+                                                 - current_q_value)
 
-        # OLD (OURS)
-        #
-        # # Use the model to predict the q vector of the pre action state
-        # predicted_pre_state_q_vector = self.model.predict(np.reshape(pre_state, (1, STATE_SIZE)))
-        # # Current q value is the index in the predicted pre state q vector corresponding to the action
-        # current_q_value = predicted_pre_state_q_vector[0][np.argmax(action)]
-        #
-        # if done:
-        #     # Use Bellman Equation to calculate the target q value.
-        #     # Here we consider the maximum predicted Q value of the new state as zero,
-        #     # since this new value is an invalid state deemed by the reules of the game
-        #     target_post_state_q = current_q_value + LEARNING_RATE*(reward - current_q_value)
-        # else:
-        #     # Use Bellman Equation to calculate the target q value for the post action state
-        #     target_post_state_q = current_q_value + \
-        #                           LEARNING_RATE*(reward + (GAMMA *
-        #                                          np.amax(self.model.predict(np.reshape(post_state, (1, STATE_SIZE)))[0]))
-        #                                          - current_q_value)
-        #
-        # # Place the target post state q into its corresponding spot in the predicted pre state q vector
-        # predicted_pre_state_q_vector[0][np.argmax(action)] = target_post_state_q
-        # # This is now the target q vector to fit the model against
-        # target_q_vector = predicted_pre_state_q_vector
-        # # Use the target q vector to fit the model
-        # self.model.fit(np.reshape(pre_state, (1, STATE_SIZE)), target_q_vector, epochs=1, verbose=0)
+        # Place the target post state q into its corresponding spot in the predicted pre state q vector
+        predicted_pre_state_q_vector[0][np.argmax(action)] = target_post_state_q
+        # This is now the target q vector to fit the model against
+        target_q_vector = predicted_pre_state_q_vector
+        # Use the target q vector to fit the model
+        self.model.fit(np.reshape(pre_state, (1, STATE_SIZE)), target_q_vector, epochs=1, verbose=0)
 
     def add_to_memory(self, pre_state: np.ndarray, post_state: np.ndarray,
-                          action: int, reward: int, done: bool) -> None:
+                      action: int, reward: int, done: bool) -> None:
         """
-
+        This function takes the relevant training information for a timestep, and adds it to a memory list.
+        This list is later used to retrain the model over previous data
         :param pre_state:
         :param post_state:
         :param action:
@@ -145,51 +138,40 @@ class NeuralNetwork:
 
     def train_on_memory(self) -> None:
         """
-
+        This function selects a set of data from the memory list to train the model on
         :return:
         """
-
         if len(self.memory) > 1000:
-            minibatch = random.sample(self.memory, 1000)
+            set = random.sample(self.memory, 1000)
         else:
-            minibatch = self.memory
+            set = self.memory
 
-        for pre_state, post_state, action, reward, done in minibatch:
+        for pre_state, post_state, action, reward, done in set:
 
-            target = reward
-            if not done:
-                target = reward + GAMMA * np.amax(self.model.predict(np.reshape(post_state, (1, STATE_SIZE)))[0])
-            target_f = self.model.predict(np.reshape(pre_state, (1, STATE_SIZE)))
-            target_f[0][np.argmax(action)] = target
-            self.model.fit(np.reshape(pre_state, (1, STATE_SIZE)), target_f, epochs=1, verbose=0)
+            # Use the model to predict the q vector of the pre action state
+            predicted_pre_state_q_vector = self.model.predict(np.reshape(pre_state, (1, STATE_SIZE)))
+            # Current q value is the index in the predicted pre state q vector corresponding to the action
+            current_q_value = predicted_pre_state_q_vector[0][np.argmax(action)]
 
-            # OLD
-            #
-            # # Use the model to predict the q vector of the pre action state
-            # predicted_pre_state_q_vector = self.model.predict(np.reshape(pre_state, (1, STATE_SIZE)))
-            # # Current q value is the index in the predicted pre state q vector corresponding to the action
-            # current_q_value = predicted_pre_state_q_vector[0][np.argmax(action)]
-            #
-            # if done:
-            #     # Use Bellman Equation to calculate the target q value.
-            #     # Here we consider the maximum predicted Q value of the new state as zero,
-            #     # since this new value is an invalid state deemed by the reules of the game
-            #     target_post_state_q = current_q_value + LEARNING_RATE * (reward - current_q_value)
-            # else:
-            #     # Use Bellman Equation to calculate the target q value for the post action state
-            #     target_post_state_q = current_q_value + \
-            #                           LEARNING_RATE * (reward + (GAMMA *
-            #                                            np.amax(self.model.predict(
-            #                                                          np.reshape(post_state, (1, STATE_SIZE)))[0]))
-            #                                            - current_q_value)
-            #
-            # # Place the target post state q into its corresponding spot in the predicted pre state q vector
-            # predicted_pre_state_q_vector[0][np.argmax(action)] = target_post_state_q
-            # # This is now the target q vector to fit the model against
-            # target_q_vector = predicted_pre_state_q_vector
-            # # Use the target q vector to fit the model
-            # self.model.fit(np.reshape(pre_state, (1, STATE_SIZE)), target_q_vector, epochs=1, verbose=0)
+            if done:
+                # Use Bellman Equation to calculate the target q value.
+                # Here we consider the maximum predicted Q value of the new state as zero,
+                # since this new value is an invalid state deemed by the reules of the game
+                target_post_state_q = current_q_value + LEARNING_RATE2 * (reward - current_q_value)
+            else:
+                # Use Bellman Equation to calculate the target q value for the post action state
+                target_post_state_q = current_q_value + \
+                                      LEARNING_RATE2 * (reward + (GAMMA *
+                                                       np.amax(self.model.predict(
+                                                                     np.reshape(post_state, (1, STATE_SIZE)))[0]))
+                                                       - current_q_value)
 
+            # Place the target post state q into its corresponding spot in the predicted pre state q vector
+            predicted_pre_state_q_vector[0][np.argmax(action)] = target_post_state_q
+            # This is now the target q vector to fit the model against
+            target_q_vector = predicted_pre_state_q_vector
+            # Use the target q vector to fit the model
+            self.model.fit(np.reshape(pre_state, (1, STATE_SIZE)), target_q_vector, epochs=1, verbose=0)
 
 
 def model_loader() -> None:
@@ -208,13 +190,10 @@ def epsilon_greedy_policy(epsilon: float, action: int, permissible_actions: List
     :param permissible_actions: the actions the snake can take that will not result in it hitting itself
     :return: the action to take (int)
     """
-    if randint(0,200) < epsilon:
+    rand_num = np.random.rand()  # produces random number between 0 and 1
+    if rand_num <= epsilon:
         action = random.choice(permissible_actions)
     return action
-    # rand_num = np.random.rand()  # produces random number between 0 and 1
-    # if rand_num <= epsilon:
-    #     action = random.choice(permissible_actions)
-    # return action
 
 
 def get_action(state, action):
@@ -299,7 +278,6 @@ def run_deep_q(com: str, retrain: str = '') -> str:
         # start game
         game.start()
 
-        # timesteps
         timesteps = 0
 
         # Get game state
@@ -325,24 +303,19 @@ def run_deep_q(com: str, retrain: str = '') -> str:
 
             if post_state.motion_dirs == post_state.food_dirs:
                 reward += 0.1
-                # game.score += 0.1
             else:
                 reward -= 0.1
 
-            print("STEP -------------------------")
+            # Helpful print statements
+            # print("STEP -------------------------")
             # print("pre state", pre_state.state)
-            print("post state", post_state)
-            print("motion_dirs: ", post_state.motion_dirs)
-            print("food_dirs: ", post_state.food_dirs)
-            print('Equal?: ', (post_state.motion_dirs == post_state.food_dirs))
-            print("reward: ", reward)
-
-
+            # print("post state", post_state)
+            # print("motion_dirs: ", post_state.motion_dirs)
+            # print("food_dirs: ", post_state.food_dirs)
+            # print('Equal?: ', (post_state.motion_dirs == post_state.food_dirs))
+            # print("reward: ", reward)
 
             timesteps += 1
-
-            if timesteps > 100:
-                game.done = True
 
         return "Score: " + str(game.score)
 
@@ -351,8 +324,10 @@ def run_deep_q(com: str, retrain: str = '') -> str:
 
         if retrain == "retrain":
             nn = NeuralNetwork(load=True)
+            epsilon = -1
         else:
             nn = NeuralNetwork()
+            epsilon = 0
 
         scores = [0]
         steps = []
@@ -363,24 +338,11 @@ def run_deep_q(com: str, retrain: str = '') -> str:
             # start game
             game.start()
 
-            # timesteps
             timesteps = 0
 
-            # NEW (INITIALIZE GAME)
-            _, _, snake, food, _ = game.generate_observations()
-            state1 = State(snake, food)
-            action = get_action(state1, 1)
-            done, _, snake, food, reward = game.step(action)
-            state2 = State(snake, food).state
-            nn.add_to_memory(state1.state, state2, action, reward, done)
-            nn.train_on_memory()
-
             while not game.done:
-                # print("Score: " + str(game.score))
                 # update game state
                 _, _, snake, food, _ = game.generate_observations()
-
-                # print("Snake: " + str(snake))
 
                 # get pre action snake state
                 pre_state = State(snake, food)
@@ -392,14 +354,11 @@ def run_deep_q(com: str, retrain: str = '') -> str:
 
                 # Use epsilon greedy action to either take predicted action or random action
                 # Takes random actions less often as more games are played
-                epsilon = 80 - game_counter
-                # epsilon = np.random.rand() - (MODEL_BIAS_FACTOR * game_counter)
+                # epsilon is -1 if retrain option is chosen, this is to ensure random actions are never chosen
+                if epsilon != -1:
+                    epsilon = np.random.rand() - (MODEL_BIAS_FACTOR * game_counter)
                 permissible_actions = State(snake, food).get_permissible_actions()
                 action = epsilon_greedy_policy(epsilon, action, permissible_actions)
-
-
-                # PLAYBACK SLEEPER
-                # sleep(0.1)
 
                 # take action and get updated game state
                 done, _, snake, food, reward = game.step(action)
@@ -417,11 +376,10 @@ def run_deep_q(com: str, retrain: str = '') -> str:
                 # Add reward for traveling towards food
                 if post_state.motion_dirs == post_state.food_dirs:
                     reward += 0.1
-                    # game.score += 0.1
                 else:
                     reward -= 0.1
 
-                # Train neural network
+                # Helpful print statements
                 # print("STEP -------------------------")
                 # print("pre state", pre_state.state)
                 # print("post state", post_state)
@@ -430,19 +388,18 @@ def run_deep_q(com: str, retrain: str = '') -> str:
                 # print("action", action)
                 # print("reward", reward)
                 # print("done", done)
+
+                # Train neural network
                 nn.train_on_timestep(pre_state.state, post_state.state, action, reward, done)
                 steps.append((pre_state, post_state.state, action, reward, done))
 
-                if game.score > max(scores):
-                    reward += 1000
-                    nn.add_to_memory(pre_state.state, post_state.state, action, reward, done)
-
                 timesteps += 1
-
             # end while game.done()
+
+            # Add training data to memory based on constraints
             if game.score > 0:
                 nn.add_to_memory(pre_state.state, post_state.state, action, reward, done)
-            elif random.uniform(0, 1) > 0.8:
+            elif random.uniform(0, 1) > 0.5:
                 nn.add_to_memory(pre_state.state, post_state.state, action, reward, done)
 
             scores.append(game.score)
@@ -456,6 +413,13 @@ def run_deep_q(com: str, retrain: str = '') -> str:
 
             # retrain on memory
             nn.train_on_memory()
+
+        # Plot scores
+        plt.plot(scores)
+        plt.title("Score per Game")
+        plt.xlabel("Game #")
+        plt.ylabel("Score")
+        plt.show()
 
     else:
         return "Incorrect Command Line Argument. Enter either 'train' or 'simulate'."
