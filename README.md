@@ -50,3 +50,11 @@ the Github repository containing the snake game used.
 - https://towardsdatascience.com/how-to-teach-an-ai-to-play-games-deep-reinforcement-learning-28f9b920440a  
 Website that helped us learn how to implement the Q-learning
 algorithm.
+## Libraries Used
+- tensorflow
+- keras
+- windows-curses
+- numpy
+- matplotlib
+- pickle
+

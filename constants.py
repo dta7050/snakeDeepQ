@@ -25,7 +25,7 @@ SNAKE_SIZE = 2
 
 MAX_DIST = sqrt(pow(WIDTH-1, 2) + pow(HEIGHT-1, 2))  # Maximum distance a snake head point can be from food
 
-STATE_SIZE = 13
+STATE_SIZE = 11
 ACTION_SET_SIZE = 3
 
 NUM_GAMES = 150
