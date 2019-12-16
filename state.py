@@ -1,3 +1,6 @@
+"""
+Development of the state variable inspired by Mauro Comi from towardsdatascience.com
+"""
 # ---------------------------------------------------------------------------------------------------------------------
 # COORDINATE SYSTEM ---------------------------------------------------------------------------------------------------
 #
@@ -72,11 +75,12 @@ class State:
         self.get_blocked_dirs(snake)
         self.get_motion_dirs(snake)
         self.get_food_dirs(snake, food)
-        self.distance = self.get_distance(snake, food)
-        self.angle = self.get_angle(snake, food)
+        # self.distance = self.get_distance(snake, food)
+        # self.angle = self.get_angle(snake, food)
 
         # Create full state list
-        self.state = np.array(self.blocked_dirs + self.motion_dirs + self.food_dirs + [self.distance, self.angle])
+        # self.state = np.array(self.blocked_dirs + self.motion_dirs + self.food_dirs + [self.distance, self.angle])
+        self.state = np.array(self.blocked_dirs + self.motion_dirs + self.food_dirs)
 
     def get_blocked_dirs(self, snake: List[List[int]]) -> None:
         """

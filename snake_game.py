@@ -1,4 +1,12 @@
-# -*- coding: utf-8 -*- 
+"""
+This file contains code developed by Github user, korolvs.
+Changes Made:
+- Most of the comments
+- Addition of rewards in 'step' method
+- Modified how the snake is initialized
+- Replaced some hard coded values with variables to generalize code and make it easier to use
+"""
+# -*- coding: utf-8 -*-
 import curses
 from constants import *
 from random import randint

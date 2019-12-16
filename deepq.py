@@ -1,24 +1,6 @@
 """
-File for implementing Deep Q Learning.
-
-Contents:
-    Neural Network class:
-        Input Arguments:
-            Number of layers
-            Number of Neurons in each layer
-            Optimizer type
-            Load option
-            ...
-        Methods:
-            init(): defines important parameters for the model creation
-            save_model(): saves network weights
-            load_model(): loads network weights
-            train_on_timestep(): trains the model using Q learning
-            add_to_memory(): adds training data to memory list
-            train_on_memory(): trains the model over a selected set from the memory list
-    model_loader(): loads a previously saved model
-    epsilon_greedy_policy(): picks action for snake to take
-    run_deep_q(): runs the deep q learning algorithm
+This file contains code inspired by Mauro Comi from towardsdatascience.com,
+particularly the memory replay portions
 """
 
 from snake_game import *
